@@ -1,4 +1,4 @@
-package com.example.task.task.model;
+package com.example.task.task.entity;
 
 public class NotificationJob {
     
