@@ -14,4 +14,6 @@ public interface RecipientRepository
     List<Recipient>findByCampaign_CampaignIdAndStatus(UUID campaignId, NotificationStatus status);
 
     List<Recipient> findByStatus(NotificationStatus status);
+
+    List<Recipient> findTop100ByStatus(NotificationStatus status);
 }

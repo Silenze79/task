@@ -1,49 +1,40 @@
 package com.example.task.task.service;
 
+import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.function.Consumer;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.task.task.entity.NotificationStatus;
 import com.example.task.task.entity.Recipient;
-import com.opencsv.CSVReader;
+
 @Service
 public class CsvService {
 
-    public List<Recipient> parseCsv(MultipartFile file)
-            throws Exception {
+    public void parseCsv(MultipartFile file, Consumer<Recipient> consumer) throws Exception {
 
-        List<Recipient> recipients = new ArrayList<>();
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        file.getInputStream()));
 
-        try (
-            Reader reader =
-                new InputStreamReader(file.getInputStream())
-        ) {
+        reader.readLine();
 
-            CSVReader csvReader =new CSVReader(reader);
+        String line;
 
-            List<String[]> rows =csvReader.readAll();
+        while ((line = reader.readLine()) != null) {
 
-            rows.remove(0);
+            String[] data = line.split(",");
 
-            for (String[] row : rows) {
+            Recipient recipient = Recipient.builder()
+                    .name(data[0])
+                    .email(data[1])
+                    .phone(data[2])
+                    .build();
 
-                Recipient recipient =
-                        Recipient.builder()
-                                .name(row[0])
-                                .email(row[1])
-                                .phone(row[2])
-                                .status(NotificationStatus.PENDING)
-                                .build();
-
-                recipients.add(recipient);
-            }
+            consumer.accept(recipient);
         }
-
-        return recipients;
     }
+
+
 }

@@ -42,10 +42,15 @@ public class Recipient {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-   @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)
     private NotificationStatus status = NotificationStatus.PENDING;
 
+    @Column(name = "retry_count")
+    private Integer retryCount = 0;
 
+    @Column(unique = true)
+    private String idempotencyKey;
+    
     @ManyToOne
     @JoinColumn(name = "campaign_id")
     private Campaign campaign;

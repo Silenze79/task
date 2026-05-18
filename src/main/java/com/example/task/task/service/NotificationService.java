@@ -1,10 +1,7 @@
 package com.example.task.task.service;
 
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.example.task.task.entity.NotificationStatus;
@@ -17,55 +14,111 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final RecipientRepository recipientRepository;
+    private final RecipientRepository recipientRepo;
 
-    // Runs every 5 seconds
-    @Scheduled(fixedDelay = 5000)
-    @Async
-    public void processPendingNotifications() {
+    private static final int MAX_RETRIES = 3;
 
-        List<Recipient> pendingRecipients =
-                recipientRepository.findByStatus(NotificationStatus.PENDING);
+    public void sendNotification(
+            Recipient recipient
+    ) {
 
-        for (Recipient recipient : pendingRecipients) {
+        if (recipient.getStatus()
+                == NotificationStatus.SENT) {
 
-            try {
+            return;
+        }
 
-                // Step 1: PROCESSING
-                recipient.setStatus(
-                        NotificationStatus.PROCESSING
-                );
-                recipientRepository.save(recipient);
+        recipient.setStatus(
+                NotificationStatus.PROCESSING
+        );
 
-                // Step 2: simulate latency (50–200ms)
-                Thread.sleep(
-                        ThreadLocalRandom.current()
-                                .nextInt(50, 201)
-                );
+        recipientRepo.save(recipient);
 
-                // Step 3: simulate failure rate (20%)
-                if (ThreadLocalRandom.current()
-                        .nextDouble() < 0.2) {
+        try {
 
-                    throw new RuntimeException(
-                            "Provider failed"
-                    );
-                }
+            simulateProvider();
 
-                // Step 4: SENT
-                recipient.setStatus(
-                        NotificationStatus.SENT
-                );
+            recipient.setStatus(
+                    NotificationStatus.SENT
+            );
 
-            } catch (Exception e) {
+        } catch (Exception e) {
 
-                // FAILED
+            Integer retries =
+                    recipient.getRetryCount();
+
+            retries = retries == null
+                    ? 1
+                    : retries + 1;
+
+            recipient.setRetryCount(
+                    retries
+            );
+
+            if (retries >= MAX_RETRIES) {
+
                 recipient.setStatus(
                         NotificationStatus.FAILED
                 );
-            }
 
-            recipientRepository.save(recipient);
+            } else {
+
+                recipient.setStatus(
+                        NotificationStatus.PENDING
+                );
+
+                exponentialBackoff(
+                        retries
+                );
+            }
+        }
+
+        recipientRepo.save(
+                recipient
+        );
+    }
+
+    private void simulateProvider()
+            throws Exception {
+
+        int latency =
+                ThreadLocalRandom.current()
+                        .nextInt(50, 201);
+
+        Thread.sleep(latency);
+
+        double failure =
+                ThreadLocalRandom.current()
+                        .nextDouble();
+
+        if (failure < 0.20) {
+
+            throw new Exception(
+                    "Provider failed"
+            );
+        }
+    }
+
+    private void exponentialBackoff(
+            int retryCount
+    ) {
+
+        try {
+
+            long wait =
+                    (long) Math.pow(
+                            2,
+                            retryCount
+                    ) * 1000;
+
+            Thread.sleep(wait);
+
+        } catch (
+                InterruptedException e
+        ) {
+
+            Thread.currentThread()
+                    .interrupt();
         }
     }
 }

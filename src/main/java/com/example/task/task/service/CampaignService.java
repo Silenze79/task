@@ -39,19 +39,7 @@ public class CampaignService {
         Campaign savedCampaign =
                 campaignRepo.save(campaign);
 
-        List<Recipient> recipients =
-                csvService.parseCsv(file);
-
-        recipients.forEach(recipient -> {
-            recipient.setCampaign(savedCampaign);
-
-            // IMPORTANT
-            recipient.setStatus(
-                    NotificationStatus.PENDING
-            );
-        });
-
-        recipientRepo.saveAll(recipients);
+       csvService.parseCsv(file,recipient -> {recipient.setCampaign(savedCampaign);recipientRepo.save(recipient);});
 
         // No processCampaign() call needed
 
