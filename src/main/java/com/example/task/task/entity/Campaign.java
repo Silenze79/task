@@ -12,13 +12,16 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import lombok.Setter;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Builder
+@Setter
 @Table(name = "campaigns")
 public class Campaign {
 
@@ -65,4 +68,8 @@ public class Campaign {
             status = Status.PENDING;
         }
     }
+    public void setCampaignId(UUID campaignId) {
+        this.campaignId = campaignId;
+    }
+
 }
