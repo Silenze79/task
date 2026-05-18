@@ -7,12 +7,12 @@ import java.util.function.Consumer;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.task.task.entity.Recipient;
+import com.example.task.task.entity.Tenant;
 
 @Service
 public class CsvService {
 
-    public void parseCsv(MultipartFile file, Consumer<Recipient> consumer) throws Exception {
+    public void parseCsv(MultipartFile file, Consumer<Tenant> consumer) throws Exception {
 
         BufferedReader reader = new BufferedReader(
                 new InputStreamReader(
@@ -26,13 +26,13 @@ public class CsvService {
 
             String[] data = line.split(",");
 
-            Recipient recipient = Recipient.builder()
+            Tenant tenant = Tenant.builder()
                     .name(data[0])
                     .email(data[1])
                     .phone(data[2])
                     .build();
 
-            consumer.accept(recipient);
+            consumer.accept(tenant);
         }
     }
 

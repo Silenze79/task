@@ -9,9 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.example.task.task.entity.Campaign;
 import com.example.task.task.entity.NotificationStatus;
-import com.example.task.task.entity.Recipient;
+import com.example.task.task.entity.Tenant;
 import com.example.task.task.repository.CampaignRepository;
-import com.example.task.task.repository.RecipientRepository;
+import com.example.task.task.repository.TenantRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -20,7 +20,7 @@ import lombok.RequiredArgsConstructor;
 public class CampaignService {
 
     private final CampaignRepository campaignRepo;
-    private final RecipientRepository recipientRepo;
+    private final TenantRepository tenantRepo;
     private final CsvService csvService;
 
     public Campaign createCampaign(
@@ -39,9 +39,7 @@ public class CampaignService {
         Campaign savedCampaign =
                 campaignRepo.save(campaign);
 
-       csvService.parseCsv(file,recipient -> {recipient.setCampaign(savedCampaign);recipientRepo.save(recipient);});
-
-        // No processCampaign() call needed
+       csvService.parseCsv(file, tenant -> {tenant.setCampaign(savedCampaign);tenantRepo.save(tenant);});
 
         return savedCampaign;
     }
@@ -68,20 +66,18 @@ public class CampaignService {
                                         "Campaign not found"
                                 ));
 
-        List<Recipient> failedRecipients =
-                recipientRepo.findByCampaign_CampaignIdAndStatus(campaignId, NotificationStatus.FAILED);
+        List<Tenant> failedtenants =
+                tenantRepo.findByCampaign_CampaignIdAndStatus(campaignId, NotificationStatus.FAILED);
 
         // reset FAILED → PENDING
-        failedRecipients.forEach(recipient ->
-                recipient.setStatus(
+        failedtenants.forEach(tenant ->
+                tenant.setStatus(
                         NotificationStatus.PENDING
                 ));
 
-        recipientRepo.saveAll(failedRecipients);
+        tenantRepo.saveAll(failedtenants);
 
-        campaign.setStatus(
-                Campaign.Status.PENDING
-        );
+        campaign.setStatus(Campaign.Status.PENDING);
 
         campaignRepo.save(campaign);
     }

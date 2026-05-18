@@ -5,8 +5,8 @@ import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.stereotype.Service;
 
 import com.example.task.task.entity.NotificationStatus;
-import com.example.task.task.entity.Recipient;
-import com.example.task.task.repository.RecipientRepository;
+import com.example.task.task.entity.Tenant;
+import com.example.task.task.repository.TenantRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,56 +14,56 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class NotificationService {
 
-    private final RecipientRepository recipientRepo;
+    private final TenantRepository tenantRepo;
 
     private static final int MAX_RETRIES = 3;
 
     public void sendNotification(
-            Recipient recipient
+            Tenant tenant
     ) {
 
-        if (recipient.getStatus()
+        if (tenant.getStatus()
                 == NotificationStatus.SENT) {
 
             return;
         }
 
-        recipient.setStatus(
+        tenant.setStatus(
                 NotificationStatus.PROCESSING
         );
 
-        recipientRepo.save(recipient);
+        tenantRepo.save(tenant);
 
         try {
 
             simulateProvider();
 
-            recipient.setStatus(
+            tenant.setStatus(
                     NotificationStatus.SENT
             );
 
         } catch (Exception e) {
 
             Integer retries =
-                    recipient.getRetryCount();
+                    tenant.getRetryCount();
 
             retries = retries == null
                     ? 1
                     : retries + 1;
 
-            recipient.setRetryCount(
+            tenant.setRetryCount(
                     retries
             );
 
             if (retries >= MAX_RETRIES) {
 
-                recipient.setStatus(
+                tenant.setStatus(
                         NotificationStatus.FAILED
                 );
 
             } else {
 
-                recipient.setStatus(
+                tenant.setStatus(
                         NotificationStatus.PENDING
                 );
 
@@ -73,8 +73,8 @@ public class NotificationService {
             }
         }
 
-        recipientRepo.save(
-                recipient
+        tenantRepo.save(
+                tenant
         );
     }
 
